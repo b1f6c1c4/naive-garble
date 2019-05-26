@@ -31,7 +31,7 @@ endef
 
 $(foreach FILE,$(patsubst src/%,%,$(CXXFILES)),$(eval $(call cxx, $(FILE))))
 
-bin/garble: $(patsubst src/%,obj/%.o,$(basename $(CFILES)))
+bin/garble: $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
 	mkdir -p $(shell dirname $@)
 	$(LD) -o $@ $(LDFLAGS) $^
 
