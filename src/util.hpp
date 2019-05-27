@@ -1,5 +1,6 @@
 #include <tomcrypt.h>
 #include <utility>
+#include <type_traits>
 #include <tuple>
 #include <vector>
 
@@ -11,19 +12,24 @@ public:
 
 	decltype(auto) operator++()
 	{
-		return std::apply([](auto & ... x){return std::make_tuple(++x ...);}, _it);
+		std::apply([](auto & ... x){std::make_tuple(++x ...);}, _it);
+		return *this;
 	}
 	decltype(auto) operator++(int)
 	{
-		return std::apply([](auto & ... x){return std::make_tuple(x++ ...);}, _it);
+		return zipped_iter(std::apply([](auto & ... x){return std::make_tuple(x++ ...);}, _it));
 	}
 	decltype(auto) operator*()
 	{
-		return std::apply([](auto & ... x){return std::make_tuple(*x ...);}, _it);
+		return std::apply([](auto & ... x){return std::tie(*x ...);}, _it);
 	}
-	decltype(auto) operator!=(const zipped_iter<Iters ...> &other)
+	auto operator==(const zipped_iter<Iters ...> &other)
 	{
-		return std::get<0>(_it) != std::get<0>(other._it);
+		return std::get<0>(_it) == std::get<0>(other._it);
+	}
+	auto operator!=(const zipped_iter<Iters ...> &other)
+	{
+		return !(operator==(other));
 	}
 
 private:

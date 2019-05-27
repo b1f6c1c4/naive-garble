@@ -6,8 +6,9 @@
 inline constexpr auto aes_cipher_size(size_t input)
 {
 	constexpr size_t block_size = 128 / 8;
-	input++;
-	return input + block_size - input % block_size;
+	if (input % block_size)
+		return input + block_size - input % block_size;
+	return input;
 }
 
 #define K_SZ static_cast<size_t>(128 / 8) // Size of label in bytes
@@ -74,13 +75,13 @@ public:
 			{
 				v = r % l.size();
 				r = r / l.size(); // r is raw_t<>
-				sha256_process(&hash, get_ptr(l), get_sz(l));
+				sha256_process(&hash, get_ptr(l[v]), get_sz(l[v]));
 			}
 			for (auto &&[v, l] : zip(b, _lb))
 			{
 				v = r % l.size();
 				r = r / l.size(); // r is raw_t<>
-				sha256_process(&hash, get_ptr(l), get_sz(l));
+				sha256_process(&hash, get_ptr(l[v]), get_sz(l[v]));
 			}
 
 			decltype(auto) h = random_vector<unsigned char>(256 / 8, prng);
