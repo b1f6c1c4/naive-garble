@@ -1,7 +1,7 @@
 CC=gcc -c -std=c99
 CXX=g++ -c -std=c++17
 LD=g++
-CFLAGS=-O3 -Isrc/libtomcrypt/headers -DLTC_SOURCE
+CFLAGS=-O3 -Isrc/libtommath/headers -Isrc/libtomcrypt/headers -DLTC_SOURCE
 CXXFLAGS=$(CFLAGS)
 LDFLAGS=
 
