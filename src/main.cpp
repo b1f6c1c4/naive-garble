@@ -48,7 +48,7 @@ int main()
 		decltype(auto) ot = ots.back();
 		ot.initiate(prng1, prng2);
 		decltype(auto) buff = raw_vector<unsigned char>(ot.dump_size());
-		ot.dump(buff);
+		ot.dump(&*buff.begin());
 		std::cout.write(make_char(get_ptr(buff)), get_sz(buff));
 	}
 

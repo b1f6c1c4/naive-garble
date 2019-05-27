@@ -1,9 +1,11 @@
+#pragma once
+
 #include <tomcrypt.h>
 #include <exception>
 #include <vector>
 #include "util.hpp"
 
-template <size_t K, size_t KN = 1024 / 8>
+template <size_t KN = 1024 / 8>
 class oblivious_transfer_sender
 {
 	typedef std::array<byte_t, KN> msg_t;
@@ -11,7 +13,20 @@ class oblivious_transfer_sender
 public:
 	oblivious_transfer_sender(size_t m) : _state{Invalid} { _x.resize(m); }
 	oblivious_transfer_sender(const oblivious_transfer_sender &) = delete;
-	oblivious_transfer_sender(oblivious_transfer_sender &&) = delete;
+	oblivious_transfer_sender(oblivious_transfer_sender &&other)
+		: _state(other._state), _rsa(std::move(other._rsa)),
+		 _x(std::move(other._x))
+	{
+		other._state = Invalid;
+		other._rsa.N = nullptr;
+		other._rsa.e = nullptr;
+		other._rsa.d = nullptr;
+		other._rsa.p = nullptr;
+		other._rsa.q = nullptr;
+		other._rsa.qP = nullptr;
+		other._rsa.dP = nullptr;
+		other._rsa.dQ = nullptr;
+	}
 	~oblivious_transfer_sender() { rsa_free(&_rsa); }
 
 	void initiate(prng_state &prng1, prng_state &prng2)
@@ -80,7 +95,7 @@ public:
 		switch (_state)
 		{
 			case Initiated:
-				RUN(mp_to_unsigned_bin(ot._rsa.N, get_ptr(x)));
+				RUN(mp_to_unsigned_bin(_rsa.N, get_ptr(_x)));
 				it += KN;
 				// fallthrough;
 			case Received:
@@ -109,10 +124,19 @@ class oblivious_transfer_receiver
 	typedef std::array<byte_t, KN> msg_t;
 
 public:
-	oblivious_transfer_receiver(size_t m) : _state{Invalid} { _x.resize(m); }
+	oblivious_transfer_receiver(size_t m) : _state{Invalid} { }
 	oblivious_transfer_receiver(const oblivious_transfer_receiver &) = delete;
-	oblivious_transfer_receiver(oblivious_transfer_receiver &&) = delete;
-	~oblivious_transfer_receiver() { rsa_free(&_rsa); mp_cleanup(&_k); }
+	oblivious_transfer_receiver(oblivious_transfer_receiver &&other)
+		: _state(other.state), _b(other._b), _N(other._N),
+		  _e(other._e), _k(other._k), _v(std::move(other._v))
+	{
+		other.state = Invalid;
+		other._N = nullptr;
+		other._e = nullptr;
+		other._k = nullptr;
+	}
+
+	~oblivious_transfer_receiver() { mp_cleanup_multi(&_N, &_e, &_k, nullptr); }
 
 	template <typename Iter>
 	void initiate(Iter it, size_t b)
@@ -123,22 +147,22 @@ public:
 		_b = b;
 
 		void *v, *tmp1, *tmp2;
-		RUN(mp_init_multi(&_k, &v, &tmp1, &tmp2, &_rsa.N, &_rsa.e, nullptr));
+		RUN(mp_init_multi(&_k, &v, &tmp1, &tmp2, &_N, &_e, nullptr));
 
 		{
 			decltype(auto) k = random_vector<unsigned char, KN>();
-			RUN(mp_read_unsigned_bin(_k, get_ptr(k), get_sz(K)));
+			RUN(mp_read_unsigned_bin(_k, get_ptr(k), KN));
 		}
 
-		RUN(mp_read_unsigned_bin(_rsa.N, get_ptr(it), KN));
-		RUN(mp_set_int(_rsa.e, 65537));
+		RUN(mp_read_unsigned_bin(_N, get_ptr(it), KN));
+		RUN(mp_set_int(_e, 65537));
 
 		it += KN + _b * KN;
 		RUN(mp_read_unsigned_bin(v, get_ptr(it), KN));
 
-		RUN(mp_exptmod(_k, _rsa.e, _rsa.N, tmp1));
+		RUN(mp_exptmod(_k, _e, _N, tmp1));
 		RUN(mp_add(v, tmp1, tmp2));
-		RUN(mp_div(tmp2, _rsa.N, nullptr, v));
+		RUN(mp_div(tmp2, _N, nullptr, v));
 		RUN(mp_to_unsigned_bin(v, get_ptr(_v)));
 
 		mp_cleanup_multi(&v, &tmp1, &tmp2, nullptr);
@@ -152,13 +176,13 @@ public:
 		if (_state != Initiated)
 			throw std::runtime_error("state is invalid");
 
-		void *m, *tmp1;
+		void *m, *tmp;
 		RUN(mp_init_multi(&m, &tmp, nullptr));
 
 		it += _b * KN;
 		RUN(mp_read_unsigned_bin(m, get_ptr(it), KN));
 		RUN(mp_sub(m, _k, tmp));
-		RUN(mp_div(tmp, _rsa.N, nullptr, m));
+		RUN(mp_div(tmp, _N, nullptr, m));
 		RUN(mp_to_unsigned_bin(m, get_ptr(_v)));
 
 		mp_cleanup_multi(&m, &tmp, nullptr);
@@ -200,8 +224,7 @@ private:
 		Received,
 	} _state;
 
-	rsa_key _rsa;
 	size_t _b;
-	void *_k;
+	void *_N, *_e, *_k;
 	msg_t _v;
 };

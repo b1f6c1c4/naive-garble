@@ -1,3 +1,5 @@
+#pragma once
+
 #include <tomcrypt.h>
 #include <utility>
 #include <type_traits>
