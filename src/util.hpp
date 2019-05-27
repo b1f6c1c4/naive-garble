@@ -2,13 +2,35 @@
 
 #include <tomcrypt.h>
 #include <utility>
+#include <string>
+#include <sstream>
 #include <type_traits>
 #include <tuple>
 #include <vector>
 
+class lruntime_error : public std::runtime_error
+{
+public:
+	template <typename T>
+    lruntime_error(T arg, const char *file, int line)
+		: std::runtime_error(arg)
+	{
+        std::ostringstream o;
+        o << file << ":" << line << ": " << arg;
+        msg = o.str();
+    }
+
+    ~lruntime_error() throw() { }
+
+    const char *what() const throw() { return msg.c_str(); }
+
+private:
+    std::string msg;
+};
+
 #define RUN(x) do { \
 		if (int err; (err = (x)) != CRYPT_OK) \
-			throw std::runtime_error(error_to_string(err)); \
+			throw lruntime_error(error_to_string(err), __FILE__, __LINE__); \
 	} while (false)
 
 template <typename ... Iters>

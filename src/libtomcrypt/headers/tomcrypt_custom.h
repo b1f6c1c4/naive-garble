@@ -159,7 +159,7 @@
 #ifndef LTC_NO_MATH
 
 /* LibTomMath */
-/* #define LTM_DESC */
+#define LTM_DESC
 
 /* TomsFastMath */
 /* #define TFM_DESC */
@@ -309,7 +309,7 @@
 #define LTC_YARROW
 
 /* a PRNG that simply reads from an available system source */
-/* #define LTC_SPRNG */
+#define LTC_SPRNG
 
 /* The RC4 stream cipher based PRNG */
 /* #define LTC_RC4 */
@@ -380,13 +380,13 @@
 /* #define LTC_DH1536 */
 /* #define LTC_DH2048 */
 
-/* #ifndef TFM_DESC */
+#ifndef TFM_DESC
 /* tfm has a problem in fp_isprime for larger key sizes */
 /* #define LTC_DH3072 */
 /* #define LTC_DH4096 */
 /* #define LTC_DH6144 */
 /* #define LTC_DH8192 */
-/* #endif */
+#endif
 
 /* Include Katja (a Rabin variant like RSA) */
 /* #define LTC_MKAT */
@@ -400,9 +400,9 @@
 /* use Shamir's trick for point mul (speeds up signature verification) */
 /* #define LTC_ECC_SHAMIR */
 
-/* #if defined(TFM_DESC) && defined(LTC_MECC) */
+#if defined(TFM_DESC) && defined(LTC_MECC)
    /* #define LTC_MECC_ACCEL */
-/* #endif */
+#endif
 
 /* do we want fixed point ECC */
 /* #define LTC_MECC_FP */

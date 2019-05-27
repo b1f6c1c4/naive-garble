@@ -29,15 +29,15 @@ public:
 	}
 	~oblivious_transfer_sender() { rsa_free(&_rsa); }
 
-	void initiate(prng_state &prng1, prng_state &prng2)
+	void initiate(prng_state &prng)
 	{
 		if (_state != Invalid)
 			throw std::runtime_error("state is invalid");
 
-		RUN(rsa_make_key(&prng2, find_prng("sprng"), KN, 65537, &_rsa));
+		RUN(rsa_make_key(nullptr, find_prng("sprng"), KN, 65537, &_rsa));
 
 		for (decltype(auto) x : _x)
-			random_fill(x, prng1);
+			random_fill(x, prng);
 
 		_state = Initiated;
 	}
