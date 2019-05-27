@@ -97,6 +97,11 @@ public:
 		return _la[i][v];
 	}
 
+	decltype(auto) get_label_bob(size_t i, size_t v) const
+	{
+		return _lb[i][v];
+	}
+
 	decltype(auto) get_table() const
 	{
 		return _t;

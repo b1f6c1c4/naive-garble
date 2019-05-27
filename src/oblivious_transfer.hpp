@@ -50,7 +50,7 @@ public:
 
 		void *v, *k, *tmp1, *tmp2;
 		RUN(mp_init_multi(&v, &k, &tmp1, &tmp2, nullptr));
-		RUN(mp_read_unsigned_bin(v, get_ptr(it), get_sz(it)));
+		RUN(mp_read_unsigned_bin(v, get_ptr(it), _x.size() * KN));
 
 		for (size_t i = 0; i < _x.size(); i++)
 		{
@@ -62,7 +62,8 @@ public:
 
 			{
 				decltype(auto) res = fun(i);
-				RUN(mp_read_unsigned_bin(tmp2, get_ptr(res), get_sz(res)));
+				decltype(auto) workaround = const_cast<unsigned char *>(get_ptr(res));
+				RUN(mp_read_unsigned_bin(tmp2, workaround, get_sz(res)));
 			}
 
 			RUN(mp_add(k, tmp2, tmp1));
@@ -95,7 +96,7 @@ public:
 		switch (_state)
 		{
 			case Initiated:
-				RUN(mp_to_unsigned_bin(_rsa.N, get_ptr(_x)));
+				RUN(mp_to_unsigned_bin(_rsa.N, get_ptr(it)));
 				it += KN;
 				// fallthrough;
 			case Received:
@@ -127,10 +128,10 @@ public:
 	oblivious_transfer_receiver(size_t m) : _state{Invalid} { }
 	oblivious_transfer_receiver(const oblivious_transfer_receiver &) = delete;
 	oblivious_transfer_receiver(oblivious_transfer_receiver &&other)
-		: _state(other.state), _b(other._b), _N(other._N),
+		: _state(other._state), _b(other._b), _N(other._N),
 		  _e(other._e), _k(other._k), _v(std::move(other._v))
 	{
-		other.state = Invalid;
+		other._state = Invalid;
 		other._N = nullptr;
 		other._e = nullptr;
 		other._k = nullptr;
@@ -139,7 +140,7 @@ public:
 	~oblivious_transfer_receiver() { mp_cleanup_multi(&_N, &_e, &_k, nullptr); }
 
 	template <typename Iter>
-	void initiate(Iter it, size_t b)
+	void initiate(Iter it, size_t b, prng_state &prng)
 	{
 		if (_state != Invalid)
 			throw std::runtime_error("state is invalid");
@@ -150,7 +151,7 @@ public:
 		RUN(mp_init_multi(&_k, &v, &tmp1, &tmp2, &_N, &_e, nullptr));
 
 		{
-			decltype(auto) k = random_vector<unsigned char, KN>();
+			decltype(auto) k = random_vector<unsigned char>(KN, prng);
 			RUN(mp_read_unsigned_bin(_k, get_ptr(k), KN));
 		}
 
