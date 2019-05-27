@@ -1,23 +1,24 @@
 #pragma once
 
 #include <tomcrypt.h>
-#include <exception>
+#include <algorithm>
 #include <vector>
 #include "util.hpp"
+
+inline constexpr auto aes_cipher_size(size_t input)
+{
+	constexpr size_t block_size = 128 / 8;
+	if (input % block_size)
+		return input + block_size - input % block_size;
+	return input;
+}
 
 template <size_t Na, size_t Nb, size_t K = 128 / 8>
 class garbled_table
 {
-	static constexpr auto aes_cipher_size(size_t input)
-	{
-		constexpr size_t block_size = 128 / 8;
-		if (input % block_size)
-			return input + block_size - input % block_size;
-		return input;
-	}
-
+	static constexpr const size_t C = aes_cipher_size(K);
 	typedef std::array<byte_t, K> label_t;
-	typedef std::array<byte_t, aes_cipher_size(K)> clabel_t;
+	typedef std::array<byte_t, C> clabel_t;
 
 public:
 	template <typename ContainerA, typename ContainerB>
@@ -58,7 +59,8 @@ public:
 				std::swap(ids[rs[i] % (_sz - i)], ids[_sz - i - 1]);
 		}
 
-		std::array<size_t, Na> a, b;
+		std::array<size_t, Na> a;
+		std::array<size_t, Nb> b;
 		for (auto &&[target, abid] : zip(_t, ids))
 		{
 			hash_state hash;
@@ -78,7 +80,7 @@ public:
 				sha256_process(&hash, get_ptr(l[v]), get_sz(l[v]));
 			}
 
-			decltype(auto) h = random_vector<unsigned char>(256 / 8, prng);
+			decltype(auto) h = raw_vector<unsigned char>(256 / 8);
 			sha256_done(&hash, get_ptr(h));
 
 			size_t c = fun(make_const(a), make_const(b));
@@ -92,19 +94,71 @@ public:
 		}
 	}
 
-	decltype(auto) get_label_alice(size_t i, size_t v) const
-	{
-		return _la[i][v];
-	}
-
 	decltype(auto) get_label_bob(size_t i, size_t v) const
 	{
 		return _lb[i][v];
 	}
 
-	decltype(auto) get_table() const
+	auto dump_size() const
 	{
-		return _t;
+		return Na * K + _lc.size() * K + _sz * C;
+	}
+
+	template <typename Iter, typename Func>
+	void dump(Iter it, Func fun) const
+	{
+		for (size_t i = 0; i < Na; i++)
+		{
+			decltype(auto) a = fun(i);
+			copy(_la[i][a], it);
+			it += K;
+		}
+		for (decltype(auto) l : _lc)
+		{
+			copy(l, it);
+			it += K;
+		}
+		copy(_t, it);
+	}
+
+	template <typename Iter, typename Func>
+	static size_t evaluate(size_t sz, size_t mc, Iter it, Func fun)
+	{
+		hash_state hash;
+		sha256_init(&hash);
+
+		sha256_process(&hash, get_ptr(it), Na * K);
+		it += Na * K;
+
+		for (size_t i = 0; i < Nb; i++)
+		{
+			decltype(auto) l = fun(i);
+			if (get_sz(l) != K)
+				throw ERR("return object is not container of K");
+			sha256_process(&hash, get_ptr(l), K);
+		}
+
+		decltype(auto) h = raw_vector<unsigned char>(256 / 8);
+		sha256_done(&hash, get_ptr(h));
+
+		symmetric_CTR ctr;
+		auto key = get_ptr(h);
+		auto iv = key + 128 / 8;
+		RUN(ctr_start(find_cipher("aes"), iv, key, 128 / 8, 0, CTR_COUNTER_LITTLE_ENDIAN, &ctr));
+
+		clabel_t target;
+
+		auto itx = it + mc * K;
+		for (size_t i = 0; i < sz; i++)
+		{
+			RUN(ctr_setiv(iv, 128 / 8, &ctr));
+			RUN(ctr_decrypt(get_ptr(itx + i * C), get_ptr(target), C, &ctr));
+			for (size_t i = 0; i < mc; i++)
+				if (std::equal(it + i * K, it + i * K + K, get_ptr(target)))
+					return i;
+		}
+
+		return -1;
 	}
 
 private:

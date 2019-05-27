@@ -2,6 +2,7 @@
 
 #include <tomcrypt.h>
 #include <utility>
+#include <exception>
 #include <string>
 #include <sstream>
 #include <type_traits>
@@ -27,6 +28,8 @@ public:
 private:
     std::string msg;
 };
+
+#define ERR(str) lruntime_error(str, __FILE__, __LINE__)
 
 #define RUN(x) do { \
 		if (int err; (err = (x)) != CRYPT_OK) \

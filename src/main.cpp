@@ -4,6 +4,9 @@
 #include "garbled_table.hpp"
 #include "oblivious_transfer.hpp"
 
+using namespace std::placeholders;
+#define BIND(obj, fun, ...) std::bind(&decltype(obj)::fun, &obj, __VA_ARGS__)
+
 template <typename T>
 inline auto make_char(T *ptr)
 {
@@ -33,14 +36,15 @@ int main()
 				return a[0] + a[1] + b[0];
 			}, prng);
 
-	/* std::cout.write(make_char(get_ptr(tbl.get_table())), get_sz(tbl.get_table())); */
+	std::array<size_t, 2> my{ 0, 2 };
+	std::array<size_t, 1> their{ 1 };
 
-	std::array<size_t, 2> my{ 1, 0 };
-	std::array<size_t, 1> their{ 3 };
-	for (size_t i = 0; i < my.size(); i++)
 	{
-		decltype(auto) l = tbl.get_label_alice(i, my[i]);
-		/* std::cout.write(make_char(get_ptr(l)), get_sz(l)); */
+		decltype(auto) buff = raw_vector<unsigned char>(tbl.dump_size());
+		tbl.dump(&*buff.begin(), [&my](size_t id){return my[id];});
+		std::cout << decltype(tbl)::evaluate(2*3*4, 7, get_ptr(buff), [&tbl,&their](size_t id){return tbl.get_label_bob(id, their[id]);});
+		/* std::cout.write(make_char(get_ptr(buff)), get_sz(buff)); */
+		return 0;
 	}
 
 	std::array<unsigned char, 16> empty{ 0x00 };
@@ -67,7 +71,7 @@ int main()
 			decltype(auto) buff = raw_vector<unsigned char>(ox.dump_size());
 			ox.dump(&*buff.begin());
 			std::cout.write(make_char(get_ptr(buff)), get_sz(buff));
-			ot.receive(&*buff.begin(), std::bind(&decltype(tbl)::get_label_bob, &tbl, i, std::placeholders::_1));
+			ot.receive(&*buff.begin(), BIND(tbl, get_label_bob, i, _1));
 		}
 		std::cout.write(make_char(get_ptr(empty)), get_sz(empty));
 		{

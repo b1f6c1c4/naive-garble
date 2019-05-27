@@ -107,9 +107,8 @@ public:
 	}
 
 	template <typename Iter>
-	void dump(Iter it)
+	void dump(Iter it) const
 	{
-		int err;
 		switch (_state)
 		{
 			case Initiated:
