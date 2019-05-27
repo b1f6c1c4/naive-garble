@@ -2,8 +2,24 @@
 
 #include <tomcrypt.h>
 #include <exception>
+#include <algorithm>
 #include <vector>
 #include "util.hpp"
+
+template <typename Iter>
+inline auto mp_dump(void *v, Iter c, size_t sz)
+{
+	size_t n = mp_unsigned_bin_size(v);
+	auto mid = get_ptr(c) + (sz - n);
+	std::fill(get_ptr(c), mid, 0);
+	return mp_to_unsigned_bin(v, mid);
+}
+
+template <typename Container>
+inline auto mp_dump(void *v, Container &c)
+{
+	return mp_dump(v, get_ptr(c), get_sz(c));
+}
 
 template <size_t KN = 1024 / 8>
 class oblivious_transfer_sender
@@ -68,7 +84,7 @@ public:
 
 			RUN(mp_add(k, tmp2, tmp1));
 			RUN(mp_div(tmp1, _rsa.N, nullptr, tmp2));
-			RUN(mp_to_unsigned_bin(tmp2, get_ptr(x)));
+			RUN(mp_dump(tmp2, x));
 		}
 
 		mp_cleanup_multi(&v, &k, &tmp1, &tmp2, nullptr);
@@ -96,7 +112,7 @@ public:
 		switch (_state)
 		{
 			case Initiated:
-				RUN(mp_to_unsigned_bin(_rsa.N, get_ptr(it)));
+				RUN(mp_dump(_rsa.N, it, KN));
 				it += KN;
 				// fallthrough;
 			case Received:
@@ -164,7 +180,7 @@ public:
 		RUN(mp_exptmod(_k, _e, _N, tmp1));
 		RUN(mp_add(v, tmp1, tmp2));
 		RUN(mp_div(tmp2, _N, nullptr, v));
-		RUN(mp_to_unsigned_bin(v, get_ptr(_v)));
+		RUN(mp_dump(v, _v));
 
 		mp_cleanup_multi(&v, &tmp1, &tmp2, nullptr);
 
@@ -183,8 +199,8 @@ public:
 		it += _b * KN;
 		RUN(mp_read_unsigned_bin(m, get_ptr(it), KN));
 		RUN(mp_sub(m, _k, tmp));
-		RUN(mp_div(tmp, _N, nullptr, m));
-		RUN(mp_to_unsigned_bin(m, get_ptr(_v)));
+		RUN(mp_mod(tmp, _N, m));
+		RUN(mp_dump(m, _v));
 
 		mp_cleanup_multi(&m, &tmp, nullptr);
 

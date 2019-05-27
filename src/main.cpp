@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tomcrypt.h>
+#include <functional>
 #include "garbled_table.hpp"
 #include "oblivious_transfer.hpp"
 
@@ -32,24 +33,60 @@ int main()
 				return a[0] + a[1] + b[0];
 			}, prng);
 
-	std::cout.write(make_char(get_ptr(tbl.get_table())), get_sz(tbl.get_table()));
+	/* std::cout.write(make_char(get_ptr(tbl.get_table())), get_sz(tbl.get_table())); */
 
 	std::array<size_t, 2> my{ 1, 0 };
+	std::array<size_t, 1> their{ 3 };
 	for (size_t i = 0; i < my.size(); i++)
 	{
 		decltype(auto) l = tbl.get_label_alice(i, my[i]);
-		std::cout.write(make_char(get_ptr(l)), get_sz(l));
+		/* std::cout.write(make_char(get_ptr(l)), get_sz(l)); */
 	}
 
+	std::array<unsigned char, 16> empty{ 0x00 };
 	std::vector<oblivious_transfer_sender<>> ots;
-	for (auto v : mbob)
+	std::vector<oblivious_transfer_receiver<>> otr;
+	for (size_t i = 0; i < mbob.size(); i++)
 	{
+		auto v = mbob[i];
+		auto th = their[i];
+
 		ots.emplace_back(v);
+		otr.emplace_back(v);
 		decltype(auto) ot = ots.back();
-		ot.initiate(prng);
-		decltype(auto) buff = raw_vector<unsigned char>(ot.dump_size());
-		ot.dump(&*buff.begin());
-		std::cout.write(make_char(get_ptr(buff)), get_sz(buff));
+		decltype(auto) ox = otr.back();
+		{
+			ot.initiate(prng);
+			decltype(auto) buff = raw_vector<unsigned char>(ot.dump_size());
+			ot.dump(&*buff.begin());
+			std::cout.write(make_char(get_ptr(buff)), get_sz(buff));
+			ox.initiate(&*buff.begin(), th, prng);
+		}
+		std::cout.write(make_char(get_ptr(empty)), get_sz(empty));
+		{
+			decltype(auto) buff = raw_vector<unsigned char>(ox.dump_size());
+			ox.dump(&*buff.begin());
+			std::cout.write(make_char(get_ptr(buff)), get_sz(buff));
+			ot.receive(&*buff.begin(), std::bind(&decltype(tbl)::get_label_bob, &tbl, i, std::placeholders::_1));
+		}
+		std::cout.write(make_char(get_ptr(empty)), get_sz(empty));
+		{
+			decltype(auto) buff = raw_vector<unsigned char>(ot.dump_size());
+			ot.dump(&*buff.begin());
+			std::cout.write(make_char(get_ptr(buff)), get_sz(buff));
+			ox.receive(&*buff.begin());
+		}
+		std::cout.write(make_char(get_ptr(empty)), get_sz(empty));
+		{
+			decltype(auto) buff = raw_vector<unsigned char>(ox.dump_size());
+			ox.dump(&*buff.begin());
+			std::cout.write(make_char(get_ptr(buff)), get_sz(buff));
+		}
+		std::cout.write(make_char(get_ptr(empty)), get_sz(empty));
+		std::cout.write(make_char(get_ptr(tbl.get_label_bob(i, th))), get_sz(tbl.get_label_bob(i, th)));
+
+		/* std::cout.write(make_char(get_ptr(buff)), get_sz(buff)); */
+		break;
 	}
 
 	return 0;
