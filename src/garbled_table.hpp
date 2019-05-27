@@ -74,13 +74,13 @@ public:
 			for (auto &&[v, l] : zip(a, _la))
 			{
 				v = r % l.size();
-				r = r / l.size(); // r is raw_t<>
+				r /= l.size();
 				sha256_process(&hash, get_ptr(l[v]), get_sz(l[v]));
 			}
 			for (auto &&[v, l] : zip(b, _lb))
 			{
 				v = r % l.size();
-				r = r / l.size(); // r is raw_t<>
+				r /= l.size();
 				sha256_process(&hash, get_ptr(l[v]), get_sz(l[v]));
 			}
 

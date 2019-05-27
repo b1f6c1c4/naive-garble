@@ -120,7 +120,8 @@ struct raw_t final
 	raw_t &operator=(const T &v) { value = v; return *this; }
 	raw_t &operator=(T &&v) noexcept { value = std::move(v); return *this; }
 
-	operator T() const { return value; }
+	operator T&() { return value; }
+	operator const T &() const { return value; }
 };
 
 typedef raw_t<unsigned char> byte_t;
