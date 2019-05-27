@@ -4,6 +4,11 @@
 #include <tuple>
 #include <vector>
 
+#define RUN(x) do { \
+		if (int err; (err = (x)) != CRYPT_OK) \
+			throw std::runtime_error(error_to_string(err)); \
+	} while (false)
+
 template <typename ... Iters>
 class zipped_iter
 {
@@ -152,4 +157,10 @@ template <typename T>
 inline decltype(auto) make_const(const T &obj)
 {
 	return obj;
+}
+
+template <typename Src, typename Dst>
+inline void copy(const Src &src, Dst &dst)
+{
+	std::copy(get_ptr(src), get_ptr(src) + get_sz(src), get_ptr(dst));
 }

@@ -3,23 +3,20 @@
 #include <vector>
 #include "util.hpp"
 
-inline constexpr auto aes_cipher_size(size_t input)
-{
-	constexpr size_t block_size = 128 / 8;
-	if (input % block_size)
-		return input + block_size - input % block_size;
-	return input;
-}
-
-#define K_SZ static_cast<size_t>(128 / 8) // Size of label in bytes
-#define C_SZ aes_cipher_size(K_SZ) // Size of aes(label) in bytes
-
-typedef std::array<byte_t, K_SZ> label_t;
-typedef std::array<byte_t, C_SZ> clabel_t;
-
-template <size_t Na, size_t Nb>
+template <size_t Na, size_t Nb, size_t K = 128 / 8>
 class garbled_table
 {
+	static constexpr auto aes_cipher_size(size_t input)
+	{
+		constexpr size_t block_size = 128 / 8;
+		if (input % block_size)
+			return input + block_size - input % block_size;
+		return input;
+	}
+
+	typedef std::array<byte_t, K> label_t;
+	typedef std::array<byte_t, aes_cipher_size(K)> clabel_t;
+
 public:
 	template <typename ContainerA, typename ContainerB>
 	garbled_table(const ContainerA &mita, const ContainerB &mitb, size_t mc) : _sz{1}
@@ -38,13 +35,8 @@ public:
 	}
 
 	template <typename Func>
-	void garble(Func fun)
+	void garble(Func fun, prng_state &prng)
 	{
-		int err;
-		prng_state prng;
-		if ((err = rng_make_prng(128, find_prng("yarrow"), &prng, NULL)) != CRYPT_OK)
-			throw std::runtime_error(error_to_string(err));
-
 		for (decltype(auto) ls : _la)
 			for (decltype(auto) l : ls)
 				random_fill(l, prng);
@@ -93,11 +85,8 @@ public:
 			symmetric_CTR ctr;
 			auto key = get_ptr(h);
 			auto iv = key + 128 / 8;
-			if ((err = ctr_start(find_cipher("aes"), iv, key, 128 / 8, 0, CTR_COUNTER_LITTLE_ENDIAN, &ctr)) != CRYPT_OK)
-				throw std::runtime_error(error_to_string(err));
-
-			if ((err = ctr_encrypt(get_ptr(lc), get_ptr(target), get_sz(lc), &ctr)) != CRYPT_OK)
-				throw std::runtime_error(error_to_string(err));
+			RUN(ctr_start(find_cipher("aes"), iv, key, 128 / 8, 0, CTR_COUNTER_LITTLE_ENDIAN, &ctr));
+			RUN(ctr_encrypt(get_ptr(lc), get_ptr(target), get_sz(lc), &ctr));
 		}
 	}
 
