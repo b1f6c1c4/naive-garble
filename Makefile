@@ -31,6 +31,8 @@ endef
 
 $(foreach FILE,$(patsubst src/%,%,$(CXXFILES)),$(eval $(call cxx, $(FILE))))
 
+obj/main.o: src/garbled_table.hpp src/util.hpp
+
 bin/garble: $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
 	mkdir -p $(shell dirname $@)
 	$(LD) -o $@ $(LDFLAGS) $^

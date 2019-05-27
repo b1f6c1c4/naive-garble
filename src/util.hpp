@@ -11,15 +11,15 @@ public:
 
 	decltype(auto) operator++()
 	{
-		return std::apply([](auto ... x){return std::make_tuple(++x ...);}, _it);
+		return std::apply([](auto & ... x){return std::make_tuple(++x ...);}, _it);
 	}
 	decltype(auto) operator++(int)
 	{
-		return std::apply([](auto ... x){return std::make_tuple(x++ ...);}, _it);
+		return std::apply([](auto & ... x){return std::make_tuple(x++ ...);}, _it);
 	}
 	decltype(auto) operator*()
 	{
-		return std::apply([](auto ... x){return std::make_tuple(*x ...);}, _it);
+		return std::apply([](auto & ... x){return std::make_tuple(*x ...);}, _it);
 	}
 	decltype(auto) operator!=(const zipped_iter<Iters ...> &other)
 	{
@@ -51,13 +51,13 @@ public:
 	decltype(auto) begin()
 	{
 		return zipped_iter<typename iterator_helper<Containers>::iterator ...>(
-				std::apply([](auto ... x){return std::make_tuple(x.begin() ...);}, _cs));
+				std::apply([](auto & ... x){return std::make_tuple(x.begin() ...);}, _cs));
 	}
 
 	decltype(auto) end()
 	{
 		return zipped_iter<typename iterator_helper<Containers>::iterator ...>(
-				std::apply([](auto ... x){return std::make_tuple(x.end() ...);}, _cs));
+				std::apply([](auto & ... x){return std::make_tuple(x.end() ...);}, _cs));
 	}
 
 private:
