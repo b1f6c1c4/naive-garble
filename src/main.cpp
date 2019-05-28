@@ -1,6 +1,6 @@
 #include <iostream>
 #include <tomcrypt.h>
-#include "wrapper.hpp"
+#include "simple_min.hpp"
 
 template <typename T>
 inline auto make_char(T *ptr)
@@ -24,30 +24,16 @@ int main()
 	prng_state prng;
 	RUN(rng_make_prng(128, find_prng("yarrow"), &prng, NULL));
 
-	std::array<size_t, 2> malice{ 2, 3 };
-	std::array<size_t, 1> mbob{ 4 };
+	simple_min_alice<4> alice(3);
+	simple_min_bob<4> bob(2);
 
-	wrapper_alice<2, 1> alice(malice, mbob, 7);
-	wrapper_bob<2, 1> bob(malice, mbob, 7);
-
-	std::array<size_t, 2> valice{ 0, 2 };
-	std::array<size_t, 1> vbob{ 1 };
-
-	{
-		decltype(auto) buff1 = raw_vector<unsigned char>(alice.garble_size());
-		alice.garble(&*buff1.begin(), prng, [](const auto &a, const auto &b){
-				return a[0] + a[1] + b[0];
-				});
-		decltype(auto) buff2 = raw_vector<unsigned char>(bob.inquiry_size());
-		bob.inquiry(&*buff1.begin(), prng, &*buff2.begin(), [&vbob](size_t id){
-				return vbob[id];
-				});
-		decltype(auto) buff3 = raw_vector<unsigned char>(alice.receive_size());
-		alice.receive(&*buff2.begin(), &*buff3.begin(), [&valice](size_t id){
-				return valice[id];
-				});
-		std::cout << bob.evaluate(&*buff3.begin());
-	}
+	decltype(auto) buff1 = raw_vector<unsigned char>(alice.garble_size());
+	alice.garble(&*buff1.begin(), prng);
+	decltype(auto) buff2 = raw_vector<unsigned char>(bob.inquiry_size());
+	bob.inquiry(&*buff1.begin(), prng, &*buff2.begin());
+	decltype(auto) buff3 = raw_vector<unsigned char>(alice.receive_size());
+	alice.receive(&*buff2.begin(), &*buff3.begin());
+	std::cout << bob.evaluate(&*buff3.begin());
 
 	return 0;
 }

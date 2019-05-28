@@ -31,7 +31,7 @@ endef
 
 $(foreach FILE,$(patsubst src/%,%,$(CXXFILES)),$(eval $(call cxx, $(FILE))))
 
-obj/main.o: src/garbled_table.hpp src/oblivious_transfer.hpp src/wrapper.hpp src/util.hpp
+obj/main.o: src/garbled_table.hpp src/oblivious_transfer.hpp src/wrapper.hpp src/simple_min.hpp src/util.hpp
 
 bin/garble: $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
 	mkdir -p $(shell dirname $@)
