@@ -4,8 +4,9 @@
 
 ```sh
 make -j4
-# Caution: binary garbage!
-./bin/garble
+./bin/garble --alice 1
+./bin/garble --bob 2
+# Should evaluate to min(1, 2) = 1
 ```
 
 ## What
