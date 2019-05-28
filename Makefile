@@ -3,7 +3,7 @@ CXX=em++ -c -std=c++17
 LD=em++
 CFLAGS=-O3 -Isrc/libtommath/headers -Isrc/libtomcrypt/headers -DLTC_SOURCE
 CXXFLAGS=$(CFLAGS)
-LDFLAGS=
+LDFLAGS=--bind
 
 CFILES=$(shell find src/ -type f -name '*.c')
 CXXFILES=$(shell find src/ -type f -name '*.cpp')

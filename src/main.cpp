@@ -53,100 +53,90 @@ int main()
 
 using namespace emscripten;
 
-template <size_t N>
+template <size_t M>
+constexpr size_t garble_size()
+{
+	return simple_min_base<M>::Garble_size();
+}
+
+template <size_t M>
+constexpr size_t inquiry_size()
+{
+	return simple_min_base<M>::Inquiry_size();
+}
+
+template <size_t M>
+constexpr size_t receive_size()
+{
+	return simple_min_base<M>::Receive_size();
+}
+
+template <size_t M>
 class alice_t
 {
 public:
 	alice_t(size_t a) : _alice(a) { }
 
-	std::string garble()
+	void garble(char *out)
 	{
 		prng_state prng;
 		RUN(rng_make_prng(128, find_prng("yarrow"), &prng, NULL));
 
-		decltype(auto) out = raw_vector<>(_alice.Garble_size());
-		_alice.garble(&*out.begin(), prng);
-
-		std::string res;
-		res.resize(get_sz(out) * 2);
-		dump_hex(res, out);
-		return res;
+		_alice.garble(out, prng);
 	}
 
-	std::string receive(std::string &input)
+	void receive(const char *in, char *out)
 	{
-		decltype(auto) in = raw_vector<>(_alice.Inquiry_size());
-		load_hex(input, in);
-
-		decltype(auto) out = raw_vector<>(_alice.Receive_size());
-		_alice.receive(&*in.begin(), &*out.begin());
-
-		std::string res;
-		res.resize(get_sz(out) * 2);
-		dump_hex(res, out);
-		return res;
+		_alice.receive(in, out);
 	}
 
 private:
-	simple_min_alice<N> _alice;
+	simple_min_alice<M> _alice;
 };
 
-#define MAKE_ALICE(N) \
-EMSCRIPTEN_BINDINGS(alice##N##_t_b) { \
-	class_<alice_t<N>>("Alice" #N) \
-		.constructor<size_t>() \
-		.function("garble", &alice_t<N>::garble) \
-		.function("receive", &alice_t<N>::receive) \
-		; \
-}
-
-MAKE_ALICE(2);
-MAKE_ALICE(4);
-
-
-template <size_t N>
+template <size_t M>
 class bob_t
 {
 public:
 	bob_t(size_t b) : _bob(b) { }
 
-	std::string inquiry(std::string &input)
+	void inquiry(const char *in, char *out)
 	{
 		prng_state prng;
 		RUN(rng_make_prng(128, find_prng("yarrow"), &prng, NULL));
 
-		decltype(auto) in = raw_vector<>(_bob.Garble_size());
-		load_hex(input, in);
-
-		decltype(auto) out = raw_vector<>(_bob.Inquiry_size());
-		_bob.inquiry(&*in.begin(), prng, &*out.begin());
-
-		std::string res;
-		res.resize(get_sz(out) * 2);
-		dump_hex(res, out);
-		return res;
+		_bob.inquiry(in, prng, out);
 	}
 
-	size_t evaluate(std::string &input)
+	size_t evaluate(const char *in)
 	{
-		decltype(auto) in = raw_vector<>(_bob.Receive_size());
-		load_hex(input, in);
-
-		return _bob.evaluate(&*in.begin());
+		return _bob.evaluate(in);
 	}
 
 private:
-	simple_min_bob<N> _bob;
+	simple_min_bob<M> _bob;
 };
 
-#define MAKE_BOB(N) \
-EMSCRIPTEN_BINDINGS(bob##N##_t_b) { \
-	class_<bob_t<N>>("Bob" #N) \
+#define MAKE(M) \
+EMSCRIPTEN_BINDINGS(alice##M##_t_b) { \
+	class_<alice_t<M>>("Alice" #M) \
 		.constructor<size_t>() \
-		.function("inquiry", &bob_t<N>::inquiry) \
-		.function("evaluate", &bob_t<N>::evaluate) \
+		.function("garble", &alice_t<M>::garble, allow_raw_pointers()) \
+		.function("receive", &alice_t<M>::receive, allow_raw_pointers()) \
 		; \
+} \
+EMSCRIPTEN_BINDINGS(bob##M##_t_b) { \
+	class_<bob_t<M>>("Bob" #M) \
+		.constructor<size_t>() \
+		.function("inquiry", &bob_t<M>::inquiry, allow_raw_pointers()) \
+		.function("evaluate", &bob_t<M>::evaluate, allow_raw_pointers()) \
+		; \
+} \
+EMSCRIPTEN_BINDINGS(base##M##_t_b) { \
+	function("garble_size", &garble_size<M>); \
+	function("inquiry_size", &inquiry_size<M>); \
+	function("receive_size", &receive_size<M>); \
 }
 
-MAKE_BOB(2);
-MAKE_BOB(4);
+MAKE(2);
+MAKE(4);
