@@ -56,7 +56,7 @@ public:
 	{
 		void *v, *k, *tmp1, *tmp2;
 		RUN(mp_init_multi(&v, &k, &tmp1, &tmp2, nullptr));
-		RUN(mp_read_unsigned_bin(tmp1, get_ptr(it), KN));
+		RUN(mp_read_unsigned_bin(tmp1, get_ptrF(it), KN));
 		RUN(mp_add(tmp1, _rsa.N, v));
 
 		for (size_t i = 0; i < _x.size(); i++)
@@ -69,8 +69,7 @@ public:
 
 			{
 				decltype(auto) res = fun(i);
-				decltype(auto) workaround = const_cast<unsigned char *>(get_ptr(res));
-				RUN(mp_read_unsigned_bin(tmp1, workaround, get_sz(res)));
+				RUN(mp_read_unsigned_bin(tmp1, get_ptrF(res), get_sz(res)));
 			}
 
 			RUN(mp_add(k, tmp1, tmp2));
@@ -145,11 +144,11 @@ public:
 			RUN(mp_read_unsigned_bin(_k, get_ptr(k), KN));
 		}
 
-		RUN(mp_read_unsigned_bin(_N, get_ptr(it), KN));
+		RUN(mp_read_unsigned_bin(_N, get_ptrF(it), KN));
 		RUN(mp_set_int(_e, 65537));
 
 		it += KN + _b * KN;
-		RUN(mp_read_unsigned_bin(v, get_ptr(it), KN));
+		RUN(mp_read_unsigned_bin(v, get_ptrF(it), KN));
 
 		RUN(mp_exptmod(_k, _e, _N, tmp1));
 		RUN(mp_add(v, tmp1, tmp2));
@@ -168,7 +167,7 @@ public:
 		RUN(mp_init_multi(&m, &tmp, nullptr));
 
 		it += _b * KN;
-		RUN(mp_read_unsigned_bin(tmp, get_ptr(it), KN));
+		RUN(mp_read_unsigned_bin(tmp, get_ptrF(it), KN));
 		RUN(mp_add(tmp, _N, m));
 		RUN(mp_sub(m, _k, tmp));
 		RUN(mp_mod(tmp, _N, m));

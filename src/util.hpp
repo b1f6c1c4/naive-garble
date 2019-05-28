@@ -132,6 +132,12 @@ inline const auto get_ptr(const Container &c)
 	return get_ptr(&*c.begin());
 }
 
+template <typename T>
+inline auto get_ptrF(T ptr)
+{
+	return const_cast<unsigned char *>(get_ptr(ptr));
+}
+
 template <typename Container>
 inline auto get_sz(const Container &c)
 {
