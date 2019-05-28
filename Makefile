@@ -1,6 +1,6 @@
-CC=gcc -c -std=c99
-CXX=g++ -c -std=c++17
-LD=g++
+CC=emcc -c -std=c99
+CXX=em++ -c -std=c++17
+LD=em++
 CFLAGS=-O3 -Isrc/libtommath/headers -Isrc/libtomcrypt/headers -DLTC_SOURCE
 CXXFLAGS=$(CFLAGS)
 LDFLAGS=
@@ -9,7 +9,7 @@ CFILES=$(shell find src/ -type f -name '*.c')
 CXXFILES=$(shell find src/ -type f -name '*.cpp')
 HFILES=$(shell find src/ -type f -name '*.h')
 
-all: bin/garble
+all: bin/garble.js
 
 define c
 
@@ -33,7 +33,7 @@ $(foreach FILE,$(patsubst src/%,%,$(CXXFILES)),$(eval $(call cxx, $(FILE))))
 
 obj/main.o: src/garbled_table.hpp src/oblivious_transfer.hpp src/wrapper.hpp src/simple_min.hpp src/util.hpp
 
-bin/garble: $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
+bin/garble.js: $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
 	mkdir -p $(shell dirname $@)
 	$(LD) -o $@ $(LDFLAGS) $^
 
