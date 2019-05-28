@@ -179,7 +179,7 @@ public:
 		return _m * KN;
 	}
 
-	decltype(auto) get_result() const
+	auto &get_result() const
 	{
 		return _v;
 	}

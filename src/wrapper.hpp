@@ -125,15 +125,13 @@ public:
 
 		return garbled_table<Na, Nb, K>::evaluate(_sz, _mc, it,
 				[this](size_t id){
-					decltype(auto) m = _ot[id].get_result();
-					return get_ptr(m) + KN - K;
+					return get_ptr(_ot[id].get_result()) + KN - K;
 				});
 	}
 
 private:
 	size_t _sz, _mc;
 	std::vector<oblivious_transfer_receiver<KN>> _ot;
-
 };
 
 #undef BIND
