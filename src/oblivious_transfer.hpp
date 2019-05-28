@@ -141,7 +141,7 @@ public:
 		RUN(mp_init_multi(&_k, &v, &tmp1, &tmp2, &_N, &_e, nullptr));
 
 		{
-			decltype(auto) k = random_vector<unsigned char>(KN, prng);
+			decltype(auto) k = random_vector<>(KN, prng);
 			RUN(mp_read_unsigned_bin(_k, get_ptr(k), KN));
 		}
 

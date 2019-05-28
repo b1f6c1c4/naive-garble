@@ -29,9 +29,9 @@ int main()
 
 	decltype(auto) buff1 = raw_vector<unsigned char>(alice.garble_size());
 	alice.garble(&*buff1.begin(), prng);
-	decltype(auto) buff2 = raw_vector<unsigned char>(bob.inquiry_size());
+	decltype(auto) buff2 = raw_vector<>(bob.inquiry_size());
 	bob.inquiry(&*buff1.begin(), prng, &*buff2.begin());
-	decltype(auto) buff3 = raw_vector<unsigned char>(alice.receive_size());
+	decltype(auto) buff3 = raw_vector<>(alice.receive_size());
 	alice.receive(&*buff2.begin(), &*buff3.begin());
 	std::cout << bob.evaluate(&*buff3.begin());
 

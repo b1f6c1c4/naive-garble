@@ -158,7 +158,7 @@ struct raw_t final
 
 typedef raw_t<unsigned char> byte_t;
 
-template <typename T>
+template <typename T = unsigned char>
 inline auto raw_vector(size_t n)
 {
 	std::vector<raw_t<T>> c;
@@ -172,7 +172,7 @@ inline void random_fill(Container &c, prng_state &prng)
 	yarrow_read(get_ptr(c), get_sz(c), &prng);
 }
 
-template <typename T>
+template <typename T = unsigned char>
 inline auto random_vector(size_t n, prng_state &prng)
 {
 	decltype(auto) c = raw_vector<T>(n);

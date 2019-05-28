@@ -80,7 +80,7 @@ public:
 				sha256_process(&hash, get_ptr(l[v]), get_sz(l[v]));
 			}
 
-			decltype(auto) h = raw_vector<unsigned char>(256 / 8);
+			decltype(auto) h = raw_vector<>(256 / 8);
 			sha256_done(&hash, get_ptr(h));
 
 			size_t c = fun(make_const(a), make_const(b));
@@ -137,7 +137,7 @@ public:
 			sha256_process(&hash, get_ptr(l), K);
 		}
 
-		decltype(auto) h = raw_vector<unsigned char>(256 / 8);
+		decltype(auto) h = raw_vector<>(256 / 8);
 		sha256_done(&hash, get_ptr(h));
 
 		symmetric_CTR ctr;
