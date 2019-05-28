@@ -11,27 +11,56 @@
 using namespace std::placeholders;
 
 template <size_t Na, size_t Nb, size_t K = 128 / 8, size_t KN = 1024 / 8>
-class wrapper_alice
+class wrapper_base
 {
 public:
 	template <typename ContainerA, typename ContainerB>
-	wrapper_alice(const ContainerA &mita, const ContainerB &mitb, size_t mc)
-		: _tbl(mita, mitb, mc)
+	wrapper_base(const ContainerA &mita, const ContainerB &mitb, size_t mc)
+		: _sz{1}, _mc{mc}, _ma{0}, _mb{0}
 	{
-		_ot.reserve(Nb);
-		for (size_t i = 0; i < Nb; i++)
-			_ot.emplace_back(mitb[i]);
+		for (auto m : mita)
+			_sz *= m;
+		for (auto m : mitb)
+			_sz *= m;
+
+		for (auto m : mita)
+			_ma += m;
+		for (auto m : mitb)
+			_mb += m;
 	}
 
 	auto garble_size() const
 	{
-		size_t sz = 0;
-		for (decltype(auto) o : _ot)
-		{
-			sz += o.dump_crypt_size();
-			sz += o.dump_size();
-		}
-		return sz;
+		return KN + _mb * KN;
+	}
+
+	auto inquiry_size() const
+	{
+		return Nb * KN;
+	}
+
+	auto receive_size() const
+	{
+		return _mb * KN + _ma * K + _mc + K + _sz * aes_cipher_size(K);
+	}
+
+protected:
+	size_t _sz, _mc;
+	size_t _ma, _mb;
+};
+
+template <size_t Na, size_t Nb, size_t K = 128 / 8, size_t KN = 1024 / 8>
+class wrapper_alice : public wrapper_base<Na, Nb, K, KN>
+{
+public:
+	template <typename ContainerA, typename ContainerB>
+	wrapper_alice(const ContainerA &mita, const ContainerB &mitb, size_t mc)
+		: wrapper_base<Na, Nb, K, KN>(mita, mitb, mc),
+		  _tbl(mita, mitb, mc)
+	{
+		_ot.reserve(Nb);
+		for (size_t i = 0; i < Nb; i++)
+			_ot.emplace_back(mitb[i]);
 	}
 
 	template <typename Func, typename Iter>
@@ -48,15 +77,6 @@ public:
 		}
 
 		return it;
-	}
-
-	auto receive_size() const
-	{
-		size_t sz = 0;
-		for (decltype(auto) o : _ot)
-			sz += o.dump_size();
-		sz += _tbl.dump_size();
-		return sz;
 	}
 
 	template <typename IterA, typename Func, typename IterB>
@@ -79,26 +99,16 @@ private:
 };
 
 template <size_t Na, size_t Nb, size_t K = 128 / 8, size_t KN = 1024 / 8>
-class wrapper_bob
+class wrapper_bob : public wrapper_base<Na, Nb, K, KN>
 {
 public:
 	template <typename ContainerA, typename ContainerB>
 	wrapper_bob(const ContainerA &mita, const ContainerB &mitb, size_t mc)
-		: _sz{1}, _mc{mc}
+		: wrapper_base<Na, Nb, K, KN>(mita, mitb, mc)
 	{
-		for (auto m : mita)
-			_sz *= m;
-		for (auto m : mitb)
-			_sz *= m;
-
 		_ot.reserve(Nb);
 		for (size_t i = 0; i < Nb; i++)
 			_ot.emplace_back(mitb[i]);
-	}
-
-	auto inquiry_size() const
-	{
-		return Nb * KN;
 	}
 
 	template <typename IterA, typename Func, typename IterB>
@@ -123,14 +133,16 @@ public:
 		for (decltype(auto) o : _ot)
 			it += o.receive(it);
 
-		return garbled_table<Na, Nb, K>::evaluate(_sz, _mc, it,
+		return garbled_table<Na, Nb, K>::evaluate(
+				wrapper_base<Na, Nb, K, KN>::_sz,
+				wrapper_base<Na, Nb, K, KN>::_mc,
+				it,
 				[this](size_t id){
 					return get_ptr(_ot[id].get_result()) + KN - K;
 				});
 	}
 
 private:
-	size_t _sz, _mc;
 	std::vector<oblivious_transfer_receiver<KN>> _ot;
 };
 

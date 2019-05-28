@@ -4,7 +4,29 @@
 #include <array>
 
 template <size_t M, size_t K = 128 / 8, size_t KN = 1024 / 8>
-class simple_min_alice : protected wrapper_alice<1, 1, K, KN>
+class simple_min_base
+{
+public:
+	static constexpr auto Garble_size()
+	{
+		return KN + M * KN;
+	}
+
+	static constexpr auto Inquiry_size()
+	{
+		return KN;
+	}
+
+	static constexpr auto Receive_size()
+	{
+		return M * KN + K + M * K + M * M * aes_cipher_size(K);
+	}
+};
+
+template <size_t M, size_t K = 128 / 8, size_t KN = 1024 / 8>
+class simple_min_alice
+	: public simple_min_base<M, K, KN>,
+	  protected wrapper_alice<1, 1, K, KN>
 {
 public:
 	simple_min_alice(size_t a)
@@ -14,8 +36,6 @@ public:
 				M),
 		 _a{a} { }
 
-	auto garble_size() const { return wrapper_alice<1, 1, K, KN>::garble_size(); }
-
 	template <typename Iter>
 	auto garble(Iter it, prng_state &prng)
 	{
@@ -24,8 +44,6 @@ public:
 					return std::min(as[0], bs[0]);
 				});
 	}
-
-	auto receive_size() const { return wrapper_alice<1, 1, K, KN>::receive_size(); }
 
 	template <typename IterA, typename IterB>
 	auto receive(IterA ita, IterB itb)
@@ -38,7 +56,9 @@ private:
 };
 
 template <size_t M, size_t K = 128 / 8, size_t KN = 1024 / 8>
-class simple_min_bob : protected wrapper_bob<1, 1, K, KN>
+class simple_min_bob
+	: public simple_min_base<M, K, KN>,
+	  protected wrapper_bob<1, 1, K, KN>
 {
 public:
 	simple_min_bob(size_t b)
@@ -47,8 +67,6 @@ public:
 				std::array<size_t, 1>{ M },
 				M),
 		 _b{b} { }
-
-	auto inquiry_size() const { return wrapper_bob<1, 1, K, KN>::inquiry_size(); }
 
 	template <typename IterA, typename IterB>
 	auto inquiry(IterA ita, prng_state &prng, IterB itb)
