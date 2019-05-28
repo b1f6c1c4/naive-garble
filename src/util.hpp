@@ -187,7 +187,8 @@ inline decltype(auto) make_const(const T &obj)
 }
 
 template <typename Src, typename Dst>
-inline void copy(const Src &src, Dst &dst)
+inline auto copy(const Src &src, Dst &dst)
 {
 	std::copy(get_ptr(src), get_ptr(src) + get_sz(src), get_ptr(dst));
+	return get_sz(src);
 }

@@ -105,7 +105,7 @@ public:
 	}
 
 	template <typename Iter, typename Func>
-	void dump(Iter it, Func fun) const
+	auto dump(Iter it, Func fun) const
 	{
 		for (size_t i = 0; i < Na; i++)
 		{
@@ -119,6 +119,7 @@ public:
 			it += K;
 		}
 		copy(_t, it);
+		return dump_size();
 	}
 
 	template <typename Iter, typename Func>
@@ -133,8 +134,6 @@ public:
 		for (size_t i = 0; i < Nb; i++)
 		{
 			decltype(auto) l = fun(i);
-			if (get_sz(l) != K)
-				throw ERR("return object is not container of K");
 			sha256_process(&hash, get_ptr(l), K);
 		}
 

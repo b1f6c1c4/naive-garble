@@ -27,13 +27,11 @@ class oblivious_transfer_sender
 	typedef std::array<byte_t, KN> msg_t;
 
 public:
-	oblivious_transfer_sender(size_t m) : _state{Invalid} { _x.resize(m); }
+	oblivious_transfer_sender(size_t m) { _x.resize(m); }
 	oblivious_transfer_sender(const oblivious_transfer_sender &) = delete;
 	oblivious_transfer_sender(oblivious_transfer_sender &&other)
-		: _state(other._state), _rsa(std::move(other._rsa)),
-		 _x(std::move(other._x))
+		: _rsa(std::move(other._rsa)), _x(std::move(other._x))
 	{
-		other._state = Invalid;
 		other._rsa.N = nullptr;
 		other._rsa.e = nullptr;
 		other._rsa.d = nullptr;
@@ -47,23 +45,15 @@ public:
 
 	void initiate(prng_state &prng)
 	{
-		if (_state != Invalid)
-			throw std::runtime_error("state is invalid");
-
 		RUN(rsa_make_key(nullptr, find_prng("sprng"), KN, 65537, &_rsa));
 
 		for (decltype(auto) x : _x)
 			random_fill(x, prng);
-
-		_state = Initiated;
 	}
 
 	template <typename Iter, typename Func>
-	void receive(Iter it, Func fun)
+	auto receive(Iter it, Func fun)
 	{
-		if (_state != Initiated)
-			throw std::runtime_error("state is invalid");
-
 		void *v, *k, *tmp1, *tmp2;
 		RUN(mp_init_multi(&v, &k, &tmp1, &tmp2, nullptr));
 		RUN(mp_read_unsigned_bin(tmp1, get_ptr(it), KN));
@@ -90,46 +80,34 @@ public:
 
 		mp_cleanup_multi(&v, &k, &tmp1, &tmp2, nullptr);
 
-		_state = Received;
+		return dump_size();
+	}
+
+	auto dump_crypt_size() const
+	{
+		return KN;
 	}
 
 	auto dump_size() const
 	{
-		switch (_state)
-		{
-			case Initiated:
-				return KN + get_sz(_x);
-			case Received:
-				return get_sz(_x);
-			default:
-				throw std::runtime_error("state is invalid");
-		}
+		return get_sz(_x);
 	}
 
 	template <typename Iter>
-	void dump(Iter it) const
+	auto dump_crypt(Iter it) const
 	{
-		switch (_state)
-		{
-			case Initiated:
-				RUN(mp_dump(_rsa.N, it, KN));
-				it += KN;
-				// fallthrough;
-			case Received:
-				copy(_x, it);
-				break;
-			default:
-				throw std::runtime_error("state is invalid");
-		}
+		RUN(mp_dump(_rsa.N, it, KN));
+		return dump_crypt_size();
+	}
+
+	template <typename Iter>
+	auto dump(Iter it) const
+	{
+		copy(_x, it);
+		return dump_size();
 	}
 
 private:
-	enum {
-		Invalid,
-		Initiated,
-		Received,
-	} _state;
-
 	rsa_key _rsa;
 	std::vector<msg_t> _x;
 };
@@ -141,13 +119,12 @@ class oblivious_transfer_receiver
 	typedef std::array<byte_t, KN> msg_t;
 
 public:
-	oblivious_transfer_receiver(size_t m) : _state{Invalid} { }
+	oblivious_transfer_receiver(size_t m) : _m(m) { }
 	oblivious_transfer_receiver(const oblivious_transfer_receiver &) = delete;
 	oblivious_transfer_receiver(oblivious_transfer_receiver &&other)
-		: _state(other._state), _b(other._b), _N(other._N),
+		: _m(other._m), _b(other._b), _N(other._N),
 		  _e(other._e), _k(other._k), _v(std::move(other._v))
 	{
-		other._state = Invalid;
 		other._N = nullptr;
 		other._e = nullptr;
 		other._k = nullptr;
@@ -156,11 +133,8 @@ public:
 	~oblivious_transfer_receiver() { mp_cleanup_multi(&_N, &_e, &_k, nullptr); }
 
 	template <typename Iter>
-	void initiate(Iter it, size_t b, prng_state &prng)
+	auto initiate(Iter it, size_t b, prng_state &prng)
 	{
-		if (_state != Invalid)
-			throw std::runtime_error("state is invalid");
-
 		_b = b;
 
 		void *v, *tmp1, *tmp2;
@@ -184,15 +158,12 @@ public:
 
 		mp_cleanup_multi(&v, &tmp1, &tmp2, nullptr);
 
-		_state = Initiated;
+		return KN + _m * KN;
 	}
 
 	template <typename Iter>
-	void receive(Iter it)
+	auto receive(Iter it)
 	{
-		if (_state != Initiated)
-			throw std::runtime_error("state is invalid");
-
 		void *m, *tmp;
 		RUN(mp_init_multi(&m, &tmp, nullptr));
 
@@ -205,44 +176,16 @@ public:
 
 		mp_cleanup_multi(&m, &tmp, nullptr);
 
-		_state = Received;
+		return _m * KN;
 	}
 
-	auto dump_size() const
+	decltype(auto) get_result() const
 	{
-		switch (_state)
-		{
-			case Initiated:
-			case Received:
-				return get_sz(_v);
-			default:
-				throw std::runtime_error("state is invalid");
-		}
-	}
-
-	template <typename Iter>
-	void dump(Iter it)
-	{
-		int err;
-		switch (_state)
-		{
-			case Initiated:
-			case Received:
-				copy(_v, it);
-				break;
-			default:
-				throw std::runtime_error("state is invalid");
-		}
+		return _v;
 	}
 
 private:
-	enum {
-		Invalid,
-		Initiated,
-		Received,
-	} _state;
-
-	size_t _b;
+	size_t _m, _b;
 	void *_N, *_e, *_k;
 	msg_t _v;
 };
