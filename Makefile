@@ -1,41 +1,53 @@
-CC=emcc -c -std=c99
-CXX=em++ -c -std=c++17
-LD=em++
 CFLAGS=-O3 -Isrc/libtommath/headers -Isrc/libtomcrypt/headers -DLTC_SOURCE
 CXXFLAGS=$(CFLAGS)
-LDFLAGS=--bind
 
 CFILES=$(shell find src/ -type f -name '*.c')
-CXXFILES=$(shell find src/ -type f -name '*.cpp')
 HFILES=$(shell find src/ -type f -name '*.h')
+HPPFILES=$(wildcard src/*.hpp)
 
-all: bin/garble.html
+all: bin/garble bin/garble.html
 
-define c
+define c-to-obj
 
-obj/$(basename $(FILE)).o: src/$(FILE) $$(HFILES)
+obj/gcc/$(basename $(FILE)).o: src/$(FILE) $$(HFILES)
 	mkdir -p $$(shell dirname $$@)
-	$$(CC) -o $$@ $$(CFLAGS) $$<
+	gcc -c --std=c99 -o $$@ $$(CFLAGS) $$<
+
+obj/gcc/lib.a: obj/gcc/$(basename $(FILE)).o
+
+obj/emcc/$(basename $(FILE)).o: src/$(FILE) $$(HFILES)
+	mkdir -p $$(shell dirname $$@)
+	emcc -c --std=c99 -o $$@ $$(CFLAGS) $$<
+
+obj/emcc/lib.a: obj/emcc/$(basename $(FILE)).o
 
 endef
 
-$(foreach FILE,$(patsubst src/%,%,$(CFILES)),$(eval $(call c, $(FILE))))
+$(foreach FILE,$(patsubst src/%,%,$(CFILES)),$(eval $(call c-to-obj, $(FILE))))
 
-define cxx
-
-obj/$(basename $(FILE)).o: src/$(FILE) $$(HFILES)
-	mkdir -p $$(shell dirname $$@)
-	$$(CXX) -o $$@ $$(CXXFLAGS) $$<
-
-endef
-
-$(foreach FILE,$(patsubst src/%,%,$(CXXFILES)),$(eval $(call cxx, $(FILE))))
-
-obj/main.o: src/garbled_table.hpp src/oblivious_transfer.hpp src/wrapper.hpp src/simple_min.hpp src/util.hpp
-
-bin/garble.html: src/main.post.js $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
+obj/gcc/lib.a:
 	mkdir -p $(shell dirname $@)
-	$(LD) -o $@ $(LDFLAGS) --post-js $^ \
+	ar -r $@ $^
+
+obj/emcc/lib.a:
+	mkdir -p $(shell dirname $@)
+	emar -r $@ $^
+
+obj/gcc/main.o: src/main.gcc.cpp $(HFILES) $(HPPFILES)
+	mkdir -p $(shell dirname $@)
+	g++ -c --std=c++17 -o $@ $(CXXFLAGS) $<
+
+obj/emcc/main.o: src/main.emcc.cpp $(HFILES) $(HPPFILES)
+	mkdir -p $(shell dirname $@)
+	em++ -c --std=c++17 -o $@ $(CXXFLAGS) $<
+
+bin/garble: obj/gcc/main.o obj/gcc/lib.a
+	mkdir -p $(shell dirname $@)
+	g++ -o $@ $^
+
+bin/garble.html: src/main.post.js obj/emcc/main.o obj/emcc/lib.a
+	mkdir -p $(shell dirname $@)
+	em++ -o $@ --post-js $^ \
 		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall"]' \
 		-s DEMANGLE_SUPPORT=1
 
