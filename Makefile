@@ -9,7 +9,7 @@ CFILES=$(shell find src/ -type f -name '*.c')
 CXXFILES=$(shell find src/ -type f -name '*.cpp')
 HFILES=$(shell find src/ -type f -name '*.h')
 
-all: bin/garble.js
+all: bin/garble.html
 
 define c
 
@@ -33,9 +33,11 @@ $(foreach FILE,$(patsubst src/%,%,$(CXXFILES)),$(eval $(call cxx, $(FILE))))
 
 obj/main.o: src/garbled_table.hpp src/oblivious_transfer.hpp src/wrapper.hpp src/simple_min.hpp src/util.hpp
 
-bin/garble.js: $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
+bin/garble.html: src/main.post.js $(patsubst src/%,obj/%.o,$(basename $(CFILES) $(CXXFILES)))
 	mkdir -p $(shell dirname $@)
-	$(LD) -o $@ $(LDFLAGS) $^
+	$(LD) -o $@ $(LDFLAGS) --post-js $^ \
+		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall"]' \
+		-s DEMANGLE_SUPPORT=1
 
 clean:
 	rm -rf bin/ obj/

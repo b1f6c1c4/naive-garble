@@ -40,6 +40,7 @@ public:
 	template <typename Func>
 	void garble(Func fun, prng_state &prng)
 	{
+		LOG("Garble started");
 		for (decltype(auto) ls : _la)
 			for (decltype(auto) l : ls)
 				random_fill(l, prng);
@@ -63,6 +64,7 @@ public:
 		std::array<size_t, Nb> b;
 		for (auto &&[target, abid] : zip(_t, ids))
 		{
+			LOG("Garbling entry #", abid);
 			hash_state hash;
 			sha256_init(&hash);
 
@@ -125,6 +127,7 @@ public:
 	template <typename Iter, typename Func>
 	static size_t evaluate(size_t sz, size_t mc, Iter it, Func fun)
 	{
+		LOG("Evalutate started");
 		hash_state hash;
 		sha256_init(&hash);
 
@@ -150,6 +153,7 @@ public:
 		auto itx = it + mc * K;
 		for (size_t i = 0; i < sz; i++)
 		{
+			LOG("Evaluating entry #", i);
 			RUN(ctr_setiv(iv, 128 / 8, &ctr));
 			RUN(ctr_decrypt(get_ptr(itx + i * C), get_ptr(target), C, &ctr));
 			for (size_t i = 0; i < mc; i++)

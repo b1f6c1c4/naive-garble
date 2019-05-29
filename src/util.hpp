@@ -198,3 +198,15 @@ inline auto copy(const Src &src, Dst &dst)
 	std::copy(get_ptr(src), get_ptr(src) + get_sz(src), get_ptr(dst));
 	return get_sz(src);
 }
+
+template <typename ... TArgs>
+decltype(auto) log(const TArgs & ... args)
+{
+	return (std::cout << ... << args) << std::endl;
+}
+
+#ifdef VERBOSE
+#define LOG(...) log(__VA_ARGS__)
+#else
+#define LOG(...) (void)(0)
+#endif

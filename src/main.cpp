@@ -54,18 +54,21 @@ int main()
 using namespace emscripten;
 
 template <size_t M>
+EMSCRIPTEN_KEEPALIVE
 constexpr size_t garble_size()
 {
 	return simple_min_base<M>::Garble_size();
 }
 
 template <size_t M>
+EMSCRIPTEN_KEEPALIVE
 constexpr size_t inquiry_size()
 {
 	return simple_min_base<M>::Inquiry_size();
 }
 
 template <size_t M>
+EMSCRIPTEN_KEEPALIVE
 constexpr size_t receive_size()
 {
 	return simple_min_base<M>::Receive_size();
@@ -74,9 +77,15 @@ constexpr size_t receive_size()
 template <size_t M>
 class alice_t
 {
-public:
 	alice_t(size_t a) : _alice(a) { }
 
+public:
+	EMSCRIPTEN_KEEPALIVE
+	static auto create(size_t a) { return new alice_t(a); }
+	EMSCRIPTEN_KEEPALIVE
+	static void remove(alice_t *o) { delete o; }
+
+	EMSCRIPTEN_KEEPALIVE
 	void garble(char *out)
 	{
 		prng_state prng;
@@ -85,6 +94,7 @@ public:
 		_alice.garble(out, prng);
 	}
 
+	EMSCRIPTEN_KEEPALIVE
 	void receive(const char *in, char *out)
 	{
 		_alice.receive(in, out);
@@ -97,9 +107,15 @@ private:
 template <size_t M>
 class bob_t
 {
-public:
 	bob_t(size_t b) : _bob(b) { }
 
+public:
+	EMSCRIPTEN_KEEPALIVE
+	static auto create(size_t a) { return new bob_t(a); }
+	EMSCRIPTEN_KEEPALIVE
+	static void remove(bob_t *o) { delete o; }
+
+	EMSCRIPTEN_KEEPALIVE
 	void inquiry(const char *in, char *out)
 	{
 		prng_state prng;
@@ -108,6 +124,7 @@ public:
 		_bob.inquiry(in, prng, out);
 	}
 
+	EMSCRIPTEN_KEEPALIVE
 	size_t evaluate(const char *in)
 	{
 		return _bob.evaluate(in);
@@ -118,25 +135,11 @@ private:
 };
 
 #define MAKE(M) \
-EMSCRIPTEN_BINDINGS(alice##M##_t_b) { \
-	class_<alice_t<M>>("Alice" #M) \
-		.constructor<size_t>() \
-		.function("garble", &alice_t<M>::garble, allow_raw_pointers()) \
-		.function("receive", &alice_t<M>::receive, allow_raw_pointers()) \
-		; \
-} \
-EMSCRIPTEN_BINDINGS(bob##M##_t_b) { \
-	class_<bob_t<M>>("Bob" #M) \
-		.constructor<size_t>() \
-		.function("inquiry", &bob_t<M>::inquiry, allow_raw_pointers()) \
-		.function("evaluate", &bob_t<M>::evaluate, allow_raw_pointers()) \
-		; \
-} \
-EMSCRIPTEN_BINDINGS(base##M##_t_b) { \
-	function("garble_size", &garble_size<M>); \
-	function("inquiry_size", &inquiry_size<M>); \
-	function("receive_size", &receive_size<M>); \
-}
+	template class alice_t<M>; \
+	template class bob_t<M>; \
+	template size_t garble_size<M>(); \
+	template size_t inquiry_size<M>(); \
+	template size_t receive_size<M>();
 
 MAKE(2);
 MAKE(4);

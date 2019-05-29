@@ -45,6 +45,7 @@ public:
 
 	void initiate(prng_state &prng)
 	{
+		LOG("Initiate (alice) started");
 		RUN(rsa_make_key(nullptr, find_prng("sprng"), KN, 65537, &_rsa));
 
 		for (decltype(auto) x : _x)
@@ -54,6 +55,7 @@ public:
 	template <typename Iter, typename Func>
 	auto receive(Iter it, Func fun)
 	{
+		LOG("Receive (alice) started");
 		void *v, *k, *tmp1, *tmp2;
 		RUN(mp_init_multi(&v, &k, &tmp1, &tmp2, nullptr));
 		RUN(mp_read_unsigned_bin(tmp1, get_ptrF(it), KN));
@@ -134,6 +136,7 @@ public:
 	template <typename Iter>
 	auto initiate(Iter it, size_t b, prng_state &prng)
 	{
+		LOG("Initiate (bob) started");
 		_b = b;
 
 		void *v, *tmp1, *tmp2;
@@ -163,6 +166,7 @@ public:
 	template <typename Iter>
 	auto receive(Iter it)
 	{
+		LOG("Receive (bob) started");
 		void *m, *tmp;
 		RUN(mp_init_multi(&m, &tmp, nullptr));
 
