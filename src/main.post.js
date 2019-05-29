@@ -44,7 +44,7 @@ Module.onRuntimeInitialized = function() {
     function Alice(a) {
       // template <size_t M>
       // auto alice_t<M>::create(size_t)
-      this.self = Module.ccall(`_ZN7alice_tILm${m}EE6createEm`, 'number', ['number'], a);
+      this.self = Module.ccall(`_ZN7alice_tILm${m}EE6createEm`, 'number', ['number'], [a]);
     }
 
     Alice.prototype.garble = function() {
@@ -52,7 +52,7 @@ Module.onRuntimeInitialized = function() {
       return withBuffer(garble_size, function(buffOut) {
         // template <size_t M>
         // void alice_t<M>::garble(char *)
-        Module.ccall(`_ZN7alice_tILm${m}EE6garbleEPc`, 'null', ['number', 'number'], [self, buffOut.byteOffset]);
+        Module.ccall(`_ZN7alice_tILm${m}EE6garbleEPh`, 'null', ['number', 'number'], [self, buffOut.byteOffset]);
         return toHex(buffOut);
       });
     };
@@ -63,8 +63,8 @@ Module.onRuntimeInitialized = function() {
         fromHex(input, buffIn);
         return withBuffer(receive_size, function(buffOut) {
           // template <size_t M>
-          // void alice_t<M>::receive(var char *, char *)
-          Module.ccall(`_ZN7alice_tILm${m}EE7receiveEPKcPc`, 'null', ['number', 'number', 'number'], [self, buffIn.byteOffset, buffOut.byteOffset]);
+          // void alice_t<M>::receive(const char *, char *)
+          Module.ccall(`_ZN7alice_tILm${m}EE7receiveEPKhPh`, 'null', ['number', 'number', 'number'], [self, buffIn.byteOffset, buffOut.byteOffset]);
           return toHex(buffOut);
         });
       });
@@ -73,13 +73,13 @@ Module.onRuntimeInitialized = function() {
     Alice.prototype.remove = function() {
       // template <size_t M>
       // void alice_t<M>::remove(alice_t *)
-      Module.ccall(`_ZN7alice_tILm${m}EE6removeEPS0_`, 'void', ['number'], this.self);
+      Module.ccall(`_ZN7alice_tILm${m}EE6removeEPS0_`, 'void', ['number'], [this.self]);
     }
 
-    function Bob(a) {
+    function Bob(b) {
       // template <size_t M>
-      // bob_t<M>::bob_t(size_t)
-      this.self = Module.ccall(`_ZN5bob_tILm${m}EE6createEm`, 'number', ['number'], a);
+      // auto bob_t<M>::create(size_t)
+      this.self = Module.ccall(`_ZN5bob_tILm${m}EE6createEm`, 'number', ['number'], [b]);
     }
 
     Bob.prototype.inquiry = function(input) {
@@ -88,8 +88,8 @@ Module.onRuntimeInitialized = function() {
         fromHex(input, buffIn);
         return withBuffer(inquiry_size, function(buffOut) {
           // template <size_t M>
-          // void bob_t<M>::inquiry(var char *, char *)
-          Module.ccall(`_ZN5bob_tILm${m}EE7inquiryEPKcPc`, 'null', ['number', 'number', 'number'], [self, buffIn.byteOffset, buffOut.byteOffset]);
+          // void bob_t<M>::inquiry(const char *, char *)
+          Module.ccall(`_ZN5bob_tILm${m}EE7inquiryEPKhPh`, 'null', ['number', 'number', 'number'], [self, buffIn.byteOffset, buffOut.byteOffset]);
           return toHex(buffOut);
         });
       });
@@ -100,15 +100,15 @@ Module.onRuntimeInitialized = function() {
       return withBuffer(receive_size, function(buffIn) {
         fromHex(input, buffIn);
         // template <size_t M>
-        // size_t bob_t<M>::evaluate(var char *)
-        return Module.ccall(`_ZN5bob_tILm${m}EE8evaluateEPKc`, 'number', ['number', 'number'], [self, buffIn.byteOffset]);
+        // size_t bob_t<M>::evaluate(const char *)
+        return Module.ccall(`_ZN5bob_tILm${m}EE8evaluateEPKh`, 'number', ['number', 'number'], [self, buffIn.byteOffset]);
       });
     };
 
     Bob.prototype.remove = function() {
       // template <size_t M>
       // void bob_t<M>::remove(bob_t *)
-      Module.ccall(`_ZN5bob_tILm${m}EE6removeEPS0_`, 'void', ['number'], this.self);
+      Module.ccall(`_ZN5bob_tILm${m}EE6removeEPS0_`, 'void', ['number'], [this.self]);
     }
 
     var obj = {};

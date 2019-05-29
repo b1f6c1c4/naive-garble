@@ -11,7 +11,7 @@ define c-to-obj
 
 obj/gcc/$(basename $(FILE)).o: src/$(FILE) $$(HFILES)
 	mkdir -p $$(shell dirname $$@)
-	gcc -c --std=c99 -o $$@ $$(CFLAGS) $$<
+	gcc -m32 -c --std=c99 -o $$@ $$(CFLAGS) $$<
 
 obj/gcc/lib.a: obj/gcc/$(basename $(FILE)).o
 
@@ -35,7 +35,7 @@ obj/emcc/lib.a:
 
 obj/gcc/main.o: src/main.gcc.cpp $(HFILES) $(HPPFILES)
 	mkdir -p $(shell dirname $@)
-	g++ -c --std=c++17 -o $@ $(CXXFLAGS) $<
+	g++ -m32 -c --std=c++17 -o $@ $(CXXFLAGS) $<
 
 obj/emcc/main.o: src/main.emcc.cpp $(HFILES) $(HPPFILES)
 	mkdir -p $(shell dirname $@)
@@ -43,7 +43,7 @@ obj/emcc/main.o: src/main.emcc.cpp $(HFILES) $(HPPFILES)
 
 bin/garble: obj/gcc/main.o obj/gcc/lib.a
 	mkdir -p $(shell dirname $@)
-	g++ -o $@ $^
+	g++ -m32 -o $@ $^
 
 bin/garble.html: src/main.post.js obj/emcc/main.o obj/emcc/lib.a
 	mkdir -p $(shell dirname $@)

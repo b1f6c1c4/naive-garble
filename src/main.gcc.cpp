@@ -2,18 +2,6 @@
 #include <tomcrypt.h>
 #include "simple_min.hpp"
 
-template <typename T>
-inline auto make_char(T *ptr)
-{
-	return reinterpret_cast<char *>(ptr);
-}
-
-template <typename T>
-inline const auto make_char(const T *ptr)
-{
-	return reinterpret_cast<const char *>(ptr);
-}
-
 inline char int2char(int input)
 {
 	if (input < 0 || input >= 16)

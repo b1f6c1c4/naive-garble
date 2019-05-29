@@ -86,7 +86,7 @@ public:
 	static void remove(alice_t *o) { delete o; }
 
 	EMSCRIPTEN_KEEPALIVE
-	void garble(char *out)
+	void garble(unsigned char *out)
 	{
 		prng_state prng;
 		RUN(rng_make_prng(128, find_prng("yarrow"), &prng, NULL));
@@ -95,7 +95,7 @@ public:
 	}
 
 	EMSCRIPTEN_KEEPALIVE
-	void receive(const char *in, char *out)
+	void receive(const unsigned char *in, unsigned char *out)
 	{
 		_alice.receive(in, out);
 	}
@@ -111,12 +111,12 @@ class bob_t
 
 public:
 	EMSCRIPTEN_KEEPALIVE
-	static auto create(size_t a) { return new bob_t(a); }
+	static auto create(size_t b) { return new bob_t(b); }
 	EMSCRIPTEN_KEEPALIVE
 	static void remove(bob_t *o) { delete o; }
 
 	EMSCRIPTEN_KEEPALIVE
-	void inquiry(const char *in, char *out)
+	void inquiry(const unsigned char *in, unsigned char *out)
 	{
 		prng_state prng;
 		RUN(rng_make_prng(128, find_prng("yarrow"), &prng, NULL));
@@ -125,7 +125,7 @@ public:
 	}
 
 	EMSCRIPTEN_KEEPALIVE
-	size_t evaluate(const char *in)
+	size_t evaluate(const unsigned char *in)
 	{
 		return _bob.evaluate(in);
 	}
