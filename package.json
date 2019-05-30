@@ -28,6 +28,7 @@
     "shelljs": "^0.8.3"
   },
   "dependencies": {
+    "pako": "^1.0.10",
     "react": "^16.8.6",
     "react-dom": "^16.8.6"
   }

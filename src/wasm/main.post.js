@@ -128,6 +128,9 @@ Module.onRuntimeInitialized = function () {
     };
 
     obj = {};
+    obj['garbleSize' + m] = garble_size;
+    obj['inquirySize' + m] = inquiry_size;
+    obj['receiveSize' + m] = receive_size;
     obj['Alice' + m] = Alice;
     obj['Bob' + m] = Bob;
     return obj;

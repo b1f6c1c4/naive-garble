@@ -1,4 +1,5 @@
 import React from 'react';
+import { smPrepare } from './sm';
 
 const { Module } = window;
 
@@ -12,9 +13,7 @@ export default class Alice extends React.PureComponent {
 
   componentWillUnmount() {
     const { obj } = this.state;
-    if (obj) {
-      obj.remove();
-    }
+    obj.forEach((o) => o.remove());
   }
 
   handleChange = ({ target }) => {
@@ -23,16 +22,23 @@ export default class Alice extends React.PureComponent {
 
   handleSubmit = (e) => {
     e.preventDefault();
+    const { kink } = this.props;
     const { obj, type, input } = this.state;
     switch (type) {
       case 0: {
-        const v = parseInt(input, 10);
-        const o = new Module.Alice4(v);
+        const res = kink ? smPrepare(input) : res = [parseInt(input, 10)];
+        const os = [];
+        let output = '';
+        res.forEach((v) => {
+          const o = new Module.Alice4(v);
+          output += o.garble();
+          os.push(o);
+        });
         this.setState({
-          obj: o,
+          obj: os,
           type: 1,
           input: '',
-          output: o.garble(),
+          output,
         });
         break;
       }
@@ -44,26 +50,40 @@ export default class Alice extends React.PureComponent {
           output: '',
         });
         break;
-      case 2:
+      case 2: {
+        let str = input;
+        let output = '';
+        obj.forEach((o) => {
+          output += o.receive(str.substr(0, Module.inquirySize4 * 2));
+          str = str.substr(Module.inquirySize4 * 2);
+        });
         this.setState({
           type: 3,
           input: '',
-          output: obj.receive(input),
+          output,
         });
         break;
+      }
       default:
         break;
     }
   };
 
   render() {
+    const { kink } = this.props;
     const { type, input, output } = this.state;
+
+    const prompt = kink ? (
+      <p>What&apos;s your base64 string?</p>
+    ) : (
+      <p>What&apos;s your number? (0, 1, 2, or 3 only)</p>
+    );
 
     switch (type) {
       case 0:
         return (
           <form onSubmit={this.handleSubmit}>
-            <p>What&apos;s your number? (0, 1, 2, or 3 only)</p>
+            {prompt}
             <input type="text" value={input} onChange={this.handleChange} />
             <input type="submit" value="Next" />
           </form>
