@@ -6,4 +6,17 @@ html, body, #app, .app {
 pre {
   white-space: pre-wrap;
   word-break: break-word;
+  background: #eee;
+  overflow: scroll;
+  padding: 10px;
+  margin: 5px;
+  max-height: 50vh;
+}
+
+.warn {
+  color: red;
+  font-weight: bold;
+  background: #eee;
+  padding: 10px;
+  margin: 5px;
 }

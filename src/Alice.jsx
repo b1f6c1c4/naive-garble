@@ -1,5 +1,6 @@
 import React from 'react';
 import { smPrepare } from './sm';
+import download from './download';
 
 const { Module } = window;
 
@@ -22,11 +23,16 @@ export default class Alice extends React.PureComponent {
 
   handleSubmit = (e) => {
     e.preventDefault();
+    const { input } = this.state;
+    this.progress(input);
+  };
+
+  progress = (input) => {
     const { kink } = this.props;
-    const { obj, type, input } = this.state;
+    const { obj, type } = this.state;
     switch (type) {
       case 0: {
-        const res = kink ? smPrepare(input) : res = [parseInt(input, 10)];
+        const res = kink ? smPrepare(input) : [parseInt(input, 10)];
         const os = [];
         let output = '';
         res.forEach((v) => {
@@ -69,15 +75,35 @@ export default class Alice extends React.PureComponent {
     }
   };
 
+  handleUpload = ({ target: { files: [f] } }) => {
+    if (!f) {
+      return;
+    }
+    const fr = new FileReader();
+    fr.onload = ({ target: { result } }) => {
+      this.progress(result);
+    };
+    fr.readAsText(f);
+  };
+
+  handleDownload = () => {
+    const { type, output } = this.state;
+    download(`${type}-alice-to-bob`, output);
+  };
+
   render() {
     const { kink } = this.props;
     const { type, input, output } = this.state;
 
     const prompt = kink ? (
-      <p>What&apos;s your base64 string?</p>
+      <h2>What&apos;s your base64 string?</h2>
     ) : (
-      <p>What&apos;s your number? (0, 1, 2, or 3 only)</p>
+      <h2>What&apos;s your number? (0, 1, 2, or 3 only)</h2>
     );
+
+    const warn = kink ? (
+      <p className="warn">Warning: it may take 10 seconds to 3 minutes to complete the computation. PLEASE BE PATIENT.</p>
+    ) : undefined;
 
     switch (type) {
       case 0:
@@ -86,13 +112,15 @@ export default class Alice extends React.PureComponent {
             {prompt}
             <input type="text" value={input} onChange={this.handleChange} />
             <input type="submit" value="Next" />
+            {warn}
           </form>
         );
       case 1:
       case 3:
         return (
           <form onSubmit={this.handleSubmit}>
-            <p>Send the following message to Bob.</p>
+            <h2>Send the following message to Bob.</h2>
+            <input type="button" value="Download" onClick={this.handleDownload} />
             <pre>{output}</pre>
             <input type="submit" value="Next" />
           </form>
@@ -100,15 +128,19 @@ export default class Alice extends React.PureComponent {
       case 2:
         return (
           <form onSubmit={this.handleSubmit}>
-            <p>Get a message from Bob and paste it here.</p>
+            <h2>Get a message from Bob and paste it here.</h2>
             <input type="text" value={input} onChange={this.handleChange} />
             <input type="submit" value="Next" />
+            <p>--Or--</p>
+            <input type="file" onChange={this.handleUpload} />
+            {warn}
           </form>
         );
       default:
         return (
           <form>
-            <p>You&apos;re all set. Bob&apos;ll tell you the result.</p>
+            <h2>You&apos;re all set.</h2>
+            <p>Bob&apos;ll tell you the result.</p>
           </form>
         );
     }

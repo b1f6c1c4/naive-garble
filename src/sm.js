@@ -8,10 +8,12 @@ function smDecode(input) {
 }
 
 export function smPrepare(input) {
+  /* eslint-disable comma-style */
   const [
     , // Personal information, discarded
     ...pref // SM information
   ] = smDecode(input);
+  /* eslint-enable comma-style */
   pref[2].splice(7, 1); // C3Q7 must by omitted
 
   const res = [];
