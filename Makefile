@@ -3,7 +3,7 @@ CXXFLAGS=$(CFLAGS)
 
 CFILES=$(shell find src/ -type f -name '*.c')
 HFILES=$(shell find src/ -type f -name '*.h')
-HPPFILES=$(wildcard src/*.hpp)
+HPPFILES=$(wildcard src/wasm/*.hpp)
 
 all: bin/garble
 
@@ -35,11 +35,11 @@ obj/emcc/lib.a:
 	mkdir -p $(shell dirname $@)
 	emar -r $@ $^
 
-obj/gcc/main.o: src/main.gcc.cpp $(HFILES) $(HPPFILES)
+obj/gcc/main.o: src/wasm/main.gcc.cpp $(HFILES) $(HPPFILES)
 	mkdir -p $(shell dirname $@)
 	g++ -m32 -c --std=c++17 -o $@ $(CXXFLAGS) $<
 
-obj/emcc/main.o: src/main.emcc.cpp $(HFILES) $(HPPFILES)
+obj/emcc/main.o: src/wasm/main.emcc.cpp $(HFILES) $(HPPFILES)
 	mkdir -p $(shell dirname $@)
 	em++ -c --std=c++17 -o $@ $(CXXFLAGS) $<
 
@@ -47,7 +47,7 @@ bin/garble: obj/gcc/main.o obj/gcc/lib.a
 	mkdir -p $(shell dirname $@)
 	g++ -m32 -o $@ $^
 
-bin/garble.js: src/main.post.js obj/emcc/main.o obj/emcc/lib.a
+bin/garble.js: src/wasm/main.post.js obj/emcc/main.o obj/emcc/lib.a
 	mkdir -p $(shell dirname $@)
 	em++ -o $@ --post-js $^ \
 		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall"]' \
