@@ -115,7 +115,7 @@ export default class Bob extends React.PureComponent {
     );
 
     const warn = kink ? (
-      <p className="warn">Warning: it may take 1 seconds to 1 minute to complete the computation. PLEASE BE PATIENT.</p>
+      <p className="warn">Warning: it may take 1 second to 1 minute to complete the computation. PLEASE BE PATIENT.</p>
     ) : undefined;
 
     switch (type) {
@@ -153,6 +153,7 @@ export default class Bob extends React.PureComponent {
           <form>
             <h2>Result obtained. Share with Alice.</h2>
             <p>The minimum of your number and Alice&apos;s number is:</p>
+            <input type="button" value="Download" onClick={this.handleDownload} />
             <pre>{output}</pre>
           </form>
         );
