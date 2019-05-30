@@ -32,7 +32,7 @@ export default class Alice extends React.PureComponent {
     const { obj, type } = this.state;
     switch (type) {
       case 0: {
-        const res = kink ? smPrepare(input) : [parseInt(input, 10)];
+        const res = kink ? smPrepare(input, false) : [parseInt(input, 10)];
         const os = [];
         let output = '';
         res.forEach((v) => {

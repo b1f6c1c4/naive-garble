@@ -57,6 +57,7 @@ export default class App extends React.PureComponent {
             </h1>
             <div>
               <button type="button" onClick={this.handleKAlice}>I&apos;m Alice and I&apos;m kinky</button>
+              <br />
               <button type="button" onClick={this.handleKBob}>I&apos;m Bob and I&apos;m kinky</button>
             </div>
             <h1>Source code?</h1>

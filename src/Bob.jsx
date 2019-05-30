@@ -1,5 +1,5 @@
 import React from 'react';
-import { smPrepare } from './sm';
+import { smPrepare, smDiscuss } from './sm';
 import download from './download';
 
 const { Module } = window;
@@ -32,7 +32,7 @@ export default class Bob extends React.PureComponent {
     const { obj, type } = this.state;
     switch (type) {
       case 0: {
-        const res = kink ? smPrepare(input) : [parseInt(input, 10)];
+        const res = kink ? smPrepare(input, true) : [parseInt(input, 10)];
         const os = [];
         res.forEach((v) => {
           os.push(new Module.Bob4(v));
@@ -79,19 +79,7 @@ export default class Bob extends React.PureComponent {
         this.setState({
           type: 4,
           input: '',
-          output: ''+output,
-        });
-        break;
-      }
-      case 3: {
-        let o = obj.evaluate(input);
-        if (o === -1) {
-          o = 'ERROR';
-        }
-        this.setState({
-          type: 4,
-          input: '',
-          output: o,
+          output: kink ? smDiscuss(output) : output[0],
         });
         break;
       }
