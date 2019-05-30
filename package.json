@@ -1,0 +1,34 @@
+{
+  "name": "naive-garble",
+  "version": "0.0.0",
+  "description": "Naive implementation of garbled circuits.",
+  "repository": "https://github.com/b1f6c1c4/naive-garble",
+  "author": "b1f6c1c4",
+  "private": true,
+  "scripts": {
+    "start": "parcel index.html",
+    "build": "node build.js",
+    "deploy": "node netlify.js",
+    "lint": "eslint --ignore-path .gitignore ."
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-proposal-decorators": "^7.4.0",
+    "babel-eslint": "^10.0.1",
+    "cssnano": "^4.1.10",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.13.0",
+    "netlify": "^2.4.4",
+    "netlify-lambda": "^1.4.5",
+    "parcel-bundler": "^1.12.3",
+    "shelljs": "^0.8.3"
+  },
+  "dependencies": {
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  }
+}

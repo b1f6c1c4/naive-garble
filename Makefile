@@ -5,7 +5,9 @@ CFILES=$(shell find src/ -type f -name '*.c')
 HFILES=$(shell find src/ -type f -name '*.h')
 HPPFILES=$(wildcard src/*.hpp)
 
-all: bin/garble bin/garble.html
+all: bin/garble
+
+wasm: bin/garble.js
 
 define c-to-obj
 
@@ -45,7 +47,7 @@ bin/garble: obj/gcc/main.o obj/gcc/lib.a
 	mkdir -p $(shell dirname $@)
 	g++ -m32 -o $@ $^
 
-bin/garble.html: src/main.post.js obj/emcc/main.o obj/emcc/lib.a
+bin/garble.js: src/main.post.js obj/emcc/main.o obj/emcc/lib.a
 	mkdir -p $(shell dirname $@)
 	em++ -o $@ --post-js $^ \
 		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall"]' \
