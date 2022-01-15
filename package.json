@@ -25,7 +25,7 @@
     "netlify": "^2.4.4",
     "netlify-lambda": "^1.4.5",
     "parcel-bundler": "^1.12.3",
-    "shelljs": "^0.8.3"
+    "shelljs": "^0.8.5"
   },
   "dependencies": {
     "pako": "^1.0.10",
